@@ -1,0 +1,34 @@
+[package]
+name = "whirligig-client"
+version = "1.0.0"
+authors = ["Triton One"]
+edition = "2021"
+description = "Yellowstone Whirligig Client by Triton"
+publish = false
+
+[dependencies]
+anyhow = "1.0.69"
+atty = "0.2.14"
+clap = { version = "4.1.6", features = ["cargo", "derive", "env"] }
+futures = "0.3.26"
+indicatif = "0.17.7"
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.93"
+solana-account-decoder = "1.17.18"
+solana-client = "1.17.18"
+solana-sdk = "1.17.18"
+solana-transaction-status = "1.17.18"
+tokio = { version = "1.32.0", features = ["rt-multi-thread", "macros"] }
+tokio-tungstenite = { version = "0.19.0", features = ["native-tls"] }
+tracing = "0.1.32"
+tracing-subscriber = { version = "0.3.9", features = ["ansi", "env-filter"] }
+
+[lints.clippy]
+clone_on_ref_ptr = "deny"
+missing_const_for_fn = "deny"
+trivially_copy_pass_by_ref = "deny"
+
+[profile.release]
+debug = true
+lto = true
+codegen-units = 1
