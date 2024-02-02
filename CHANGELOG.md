@@ -18,4 +18,4 @@ The minor version will be incremented upon a breaking change and the patch versi
 
 ## [1.0.0+solana.1.17.16] - 2024-02-02
 
-- ws-client: Init
+- ws-client: init ([#1](https://github.com/rpcpool/yellowstone-whirligig-client/pull/1))
