@@ -42,7 +42,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Run clippy
-        run: cargo clippy --all-targets --tests
+        run: cargo clippy --all-targets --tests -- -Dwarnings
 
       # - name: Run test
       #   run: cargo test --all-targets
