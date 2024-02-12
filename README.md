@@ -8,13 +8,12 @@ https://docs.solana.com/api/websocket
 
 ```
 $ cargo run --bin ws-client -- --help
-    Finished dev [unoptimized + debuginfo] target(s) in 0.24s
-     Running `target/debug/ws-client --help`
 Usage: ws-client [OPTIONS] <COMMAND>
 
 Commands:
-  subscribe  
-  help       Print this message or the help of the given subcommand(s)
+  subscribe    Subscribe on updates
+  get-version  Get node version
+  help         Print this message or the help of the given subcommand(s)
 
 Options:
   -e, --endpoint <ENDPOINT>  WebSocket endpoint [default: ws://127.0.0.1:8000/]
@@ -30,8 +29,8 @@ Commands:
   signature               Subscribe on transaction confirmation events
   slot                    Subscribe on slot updates
   block                   Subscribe on block updates
-  transaction             
-  transaction-deprecated  
+  transaction             Subscribe on transaction updates
+  transaction-deprecated  Subscribe on transaction updates (deprecated format)
   help                    Print this message or the help of the given subcommand(s)
 
 Options:

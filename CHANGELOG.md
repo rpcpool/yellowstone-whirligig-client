@@ -16,6 +16,12 @@ The minor version will be incremented upon a breaking change and the patch versi
 
 ### Breaking
 
+## [1.1.0] - 2024-02-11
+
+### Features
+
+- ws-client: support `get-version` ([#2](https://github.com/rpcpool/yellowstone-whirligig-client/pull/2))
+
 ## [1.0.0] - 2024-02-02
 
 - ws-client: init ([#1](https://github.com/rpcpool/yellowstone-whirligig-client/pull/1))

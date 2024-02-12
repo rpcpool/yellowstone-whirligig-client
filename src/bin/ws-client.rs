@@ -3,6 +3,7 @@ use {
     clap::{Parser, Subcommand, ValueEnum},
     futures::{sink::SinkExt, stream::StreamExt},
     indicatif::{ProgressBar, ProgressStyle},
+    jsonrpc_core::types::response::Output as RpcOutput,
     serde::Deserialize,
     serde_json::{json, Value},
     solana_account_decoder::{UiAccountEncoding, UiDataSliceConfig},
@@ -15,6 +16,7 @@ use {
         },
         rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
     },
+    solana_rpc_client_api::response::RpcVersionInfo,
     solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey, signature::Signature},
     solana_transaction_status::{TransactionDetails, UiTransactionEncoding},
     std::{fmt, str::FromStr},
@@ -53,6 +55,7 @@ impl Args {
 
 #[derive(Debug, Clone, Subcommand)]
 enum ArgsAction {
+    /// Subscribe on updates
     Subscribe {
         /// Type of subscription
         #[command(subcommand)]
@@ -64,6 +67,8 @@ enum ArgsAction {
         #[clap(long, default_value_t = false)]
         only_counter: bool,
     },
+    /// Get node version
+    GetVersion,
 }
 
 #[derive(Clone, Copy, Default, ValueEnum)]
@@ -181,6 +186,7 @@ enum SubscribeAction {
     // Vote {}
 
     // EXPERIMENTAL
+    /// Subscribe on transaction updates
     Transaction {
         /// Include vote transactions
         #[clap(long)]
@@ -213,6 +219,7 @@ enum SubscribeAction {
         #[clap(long, short)]
         max_supported_transaction_version: Option<u8>,
     },
+    /// Subscribe on transaction updates (deprecated format)
     TransactionDeprecated {
         /// Include vote transactions
         #[clap(long)]
@@ -293,18 +300,28 @@ impl From<SubscribeTransactionDetails> for TransactionDetails {
     }
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum SubscribeResponse {
+    Subscribe(usize),
+    GetVersion(RpcVersionInfo),
+}
+
 async fn subscribe_experimental(
     endpoint: &str,
-    name: &str,
+    method: &str,
     params: Value,
-) -> anyhow::Result<WebSocketStream<MaybeTlsStream<TcpStream>>> {
+) -> anyhow::Result<(
+    SubscribeResponse,
+    WebSocketStream<MaybeTlsStream<TcpStream>>,
+)> {
     let (mut stream, _) = connect_async(endpoint).await?;
     stream
         .send(Message::Text(
             json!({
                 "jsonrpc": "2.0",
                 "id": 1,
-                "method": format!("{name}Subscribe"),
+                "method": method,
                 "params": params,
             })
             .to_string(),
@@ -313,14 +330,13 @@ async fn subscribe_experimental(
 
     match stream.next().await {
         Some(Ok(Message::Text(data))) => {
-            #[derive(Deserialize)]
-            struct Response {
-                #[allow(dead_code)]
-                result: usize,
-            }
-
-            let _ = serde_json::from_str::<Response>(&data)?;
-            Ok(stream)
+            let response = match serde_json::from_str(&data)? {
+                RpcOutput::Success(output) => serde_json::from_value(output.result)?,
+                RpcOutput::Failure(failure) => {
+                    anyhow::bail!("subscribe error: {:?}", failure.error)
+                }
+            };
+            Ok((response, stream))
         }
         Some(Ok(_)) => anyhow::bail!("invalid message type"),
         Some(Err(error)) => anyhow::bail!(error),
@@ -526,9 +542,9 @@ async fn main() -> anyhow::Result<()> {
                     show_rewards,
                     max_supported_transaction_version,
                 } => {
-                    let mut stream = subscribe_experimental(
+                    let (_response, mut stream) = subscribe_experimental(
                         &args.endpoint,
-                        "transaction",
+                        "transactionSubscribe",
                         json!([{
                             "vote": vote,
                             "failed": failed,
@@ -558,9 +574,9 @@ async fn main() -> anyhow::Result<()> {
                     exclude,
                     required,
                 } => {
-                    let mut stream = subscribe_experimental(
+                    let (_response, mut stream) = subscribe_experimental(
                         &args.endpoint,
-                        "transaction",
+                        "transactionSubscribe",
                         json!([{
                             "vote": vote,
                             "failed": failed,
@@ -576,6 +592,19 @@ async fn main() -> anyhow::Result<()> {
                         on_new_item(&|| info!("transaction, new item: {item:?}"));
                     }
                 }
+            }
+        }
+        ArgsAction::GetVersion => {
+            let (response, _stream) =
+                subscribe_experimental(&args.endpoint, "getVersion", json!([])).await?;
+            match response {
+                SubscribeResponse::Subscribe(_id) => {
+                    unreachable!("invalid response")
+                }
+                SubscribeResponse::GetVersion(info) => info!(
+                    "solana_core: {}, feature_set: {:?}",
+                    info.solana_core, info.feature_set
+                ),
             }
         }
     }
