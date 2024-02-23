@@ -69,6 +69,8 @@ enum ArgsAction {
     },
     /// Get node version
     GetVersion,
+    /// Get Whirligig version
+    GetVersionWhirligig,
 }
 
 #[derive(Clone, Copy, Default, ValueEnum)]
@@ -300,11 +302,38 @@ impl From<SubscribeTransactionDetails> for TransactionDetails {
     }
 }
 
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+pub struct VersionWhirligigInfoVersion {
+    package: String,
+    version: String,
+    proto: String,
+    solana: String,
+    git: String,
+    rustc: String,
+    buildts: String,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+struct VersionWhirligigInfoExtra {
+    #[serde(default)]
+    hostname: String,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+struct VersionWhirligigInfo {
+    version: VersionWhirligigInfoVersion,
+    extra: VersionWhirligigInfoExtra,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 enum SubscribeResponse {
     Subscribe(usize),
     GetVersion(RpcVersionInfo),
+    GetVersionWhirligig(VersionWhirligigInfo),
 }
 
 async fn subscribe_experimental(
@@ -605,6 +634,24 @@ async fn main() -> anyhow::Result<()> {
                     "solana_core: {}, feature_set: {:?}",
                     info.solana_core, info.feature_set
                 ),
+                SubscribeResponse::GetVersionWhirligig(_info) => {
+                    unreachable!("invalid response")
+                }
+            }
+        }
+        ArgsAction::GetVersionWhirligig => {
+            let (response, _stream) =
+                subscribe_experimental(&args.endpoint, "getVersionWhirligig", json!([])).await?;
+            match response {
+                SubscribeResponse::Subscribe(_id) => {
+                    unreachable!("invalid response")
+                }
+                SubscribeResponse::GetVersion(_info) => {
+                    unreachable!("invalid response")
+                }
+                SubscribeResponse::GetVersionWhirligig(info) => {
+                    info!("whirligig version: {:#?}", info)
+                }
             }
         }
     }
