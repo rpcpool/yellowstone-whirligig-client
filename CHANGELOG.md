@@ -12,6 +12,8 @@ The minor version will be incremented upon a breaking change and the patch versi
 
 ### Features
 
+- ws-slot-perf: init ([#4](https://github.com/rpcpool/yellowstone-whirligig-client/pull/4))
+
 ### Fixes
 
 ### Breaking
