@@ -21,7 +21,9 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
 
-    runs-on: ["${{ matrix.os }}"]
+    runs-on:
+      group: Public
+      labels: [self-hosted, rpcpool, public]
     steps:
       - uses: actions/checkout@v4
 
