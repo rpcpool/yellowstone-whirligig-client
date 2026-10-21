@@ -1,0 +1,35 @@
+# .goreleaser.yaml for rpcpool/yellowstone-whirligig-client
+#
+# Binaries-ci consumes this file when a build is dispatched for (org=rpcpool, repo=yellowstone-whirligig-client, tag=vX.Y.Z).
+# Binaries-ci injects signing, GCS upload and the Slack announce; do not add `signs:`, `blobs:` or `announce:` here.
+#
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+
+version: 2
+
+builds:
+    - id: ws-client
+      builder: rust
+      binary: ws-client
+      targets:
+          - x86_64-unknown-linux-gnu
+      flags:
+          - --release
+          - --bin=ws-client
+      hooks:
+          post:
+              - cmd: strip {{ .Path }}
+
+archives:
+    - id: ws-client
+      ids: [ws-client]
+      name_template: ws-client-linux-amd64
+      formats: [binary]
+
+release:
+    header: |
+        rust {{ .Env.RUST_VERSION }}
+
+changelog:
+    sort: asc
+    use: github
