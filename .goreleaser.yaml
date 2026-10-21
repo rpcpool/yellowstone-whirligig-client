@@ -10,6 +10,8 @@ version: 2
 builds:
     - id: ws-client
       builder: rust
+      # Native cargo build: openssl-sys needs host OpenSSL headers that zigbuild does not expose.
+      command: build
       binary: ws-client
       targets:
           - x86_64-unknown-linux-gnu
